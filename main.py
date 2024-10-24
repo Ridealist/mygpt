@@ -47,7 +47,10 @@ with st.sidebar:
         ["prompts/general.yaml", "prompts/prompt-maker.yaml"],
         index=0,
     )
-    task_input = st.text_area("TASK 입력", "")
+    if selected_prompt == "prompts/general.yaml":
+        task_input = None
+    else:       
+        task_input = st.text_area("프롬프트 작업 입력", "", placeholder="(ex. 어려운 수학 문제를 쉽게 설명해주기)")
 
 
 # 이전 대화를 출력
