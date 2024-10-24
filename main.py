@@ -11,7 +11,7 @@ from langchain_teddynote.prompts import load_prompt
 #load_dotenv()
 
 # python -m streamlit run main.py
-st.title("📝나만의 GPT 만들기")
+st.title("📝나만의 GPT 만들기")
 st.subheader("(🧸테디노트/TeddyNote님 코드 기반)")
 
 # config = settings.load_config()
