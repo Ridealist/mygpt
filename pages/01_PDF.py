@@ -14,13 +14,13 @@ from langchain_teddynote.prompts import load_prompt
 from langchain_teddynote import logging
 
 # API KEY 정보로드
-config = settings.load_config()
-if "api_key" in config:
-    st.session_state.api_key = config["api_key"]
-    st.write(f'사용자 입력 API키 : {st.session_state.api_key[-5:]}')
-else : 
-    st.session_state.api_key = st.secrets["openai_api_key"]
-    st.write(f'API키 : {st.secrets["openai_api_key"][-5:]}')
+# config = settings.load_config()
+# if "api_key" in config:
+#     st.session_state.api_key = config["api_key"]
+#     st.write(f'사용자 입력 API키 : {st.session_state.api_key[-5:]}')
+# else : 
+#     st.session_state.api_key = st.secrets["openai_api_key"]
+#     st.write(f'API키 : {st.secrets["openai_api_key"][-5:]}')
 
 # 캐시 디렉토리 생성
 if not os.path.exists(".cache"):
