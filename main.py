@@ -14,22 +14,21 @@ from langchain_teddynote.prompts import load_prompt
 st.title("📝나만의 GPT 만들기")
 st.subheader("(🧸테디노트/TeddyNote님 코드 기반)")
 
-# config = settings.load_config()
-# if "api_key" in config:
-#     st.session_state.api_key = config["api_key"]
-#     st.write(f'사용자 입력 API키 : {st.session_state.api_key[-5:]}')
-# else : 
-#     st.session_state.api_key = st.secrets["openai_api_key"]
-#     st.write(f'API키 : {st.secrets["openai_api_key"][-5:]}')
-# main_text = st.empty()
 
-api_key = st.text_input("🔑 새로운 OPENAI API Key", type="password")
-save_btn = st.button("설정 저장", key="save_btn")
+st.session_state.api_key = st.secrets["openai_api_key"]
+st.write(f'API키 : {st.secrets["openai_api_key"][-5:]}')
+main_text = st.empty()
 
-if save_btn:
-   settings.save_config({"api_key": api_key})
-   st.session_state.api_key = api_key
-   st.write("설정이 저장되었습니다.")
+## 학생에게 api-key를 입력하게 할 경우
+## ------(아래 주석을 해제해주세요)------
+# api_key = st.text_input("🔑 새로운 OPENAI API Key", type="password")
+# save_btn = st.button("설정 저장", key="save_btn")
+
+# if save_btn:
+#    settings.save_config({"api_key": api_key})
+#    st.session_state.api_key = api_key
+#    st.write("설정이 저장되었습니다.")
+## --------------------------------
 
 
 # 처음 1번만 실행하기 위한 코드
