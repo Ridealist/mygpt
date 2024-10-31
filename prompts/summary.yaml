@@ -10,9 +10,12 @@ template: |
   - 📝 세 번째 문장
   - ...
 
+  #Context:
+  {context}
+
   #Given Text:
   {question}
 
   #Summary:
 
-input_variables: ["question"]
+input_variables: ["question", "context"]
