@@ -7,28 +7,10 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from langchain_teddynote.prompts import load_prompt
 
-# API KEY 정보로드
-#load_dotenv()
+st.title("오늘 배운 내용 점검하기 ✅")
+st.text("개념을 재학습해볼까요?")
 
-# python -m streamlit run main.py
-st.title("📝나만의 GPT 만들기")
-st.subheader("(🧸테디노트/TeddyNote님 코드 기반)")
-
-
-st.session_state.api_key = st.secrets["openai_api_key"]
-st.write(f'API키 : {st.secrets["openai_api_key"][-5:]}')
-main_text = st.empty()
-
-## 학생에게 api-key를 입력하게 할 경우
-## ------(아래 주석을 해제해주세요)------
-# api_key = st.text_input("🔑 새로운 OPENAI API Key", type="password")
-# save_btn = st.button("설정 저장", key="save_btn")
-
-# if save_btn:
-#    settings.save_config({"api_key": api_key})
-#    st.session_state.api_key = api_key
-#    st.write("설정이 저장되었습니다.")
-## --------------------------------
+st.image("images/review_1.png")
 
 
 # 처음 1번만 실행하기 위한 코드
@@ -41,16 +23,18 @@ with st.sidebar:
     # 초기화 버튼 생성
     clear_btn = st.button("대화 초기화")
 
-    # prompt_files = glob.glob("prompts/*.yaml")
-    selected_prompt = st.selectbox(
-        "프롬프트 선택",
-        ["prompts/general.yaml", "prompts/prompt-maker.yaml"],
-        index=0,
-    )
-    if selected_prompt == "prompts/general.yaml":
-        task_input = None
-    else:       
-        task_input = st.text_area("프롬프트 작업 입력", "", placeholder="(ex. 어려운 수학 문제를 쉽게 설명해주기)")
+    # # prompt_files = glob.glob("prompts/*.yaml")
+    # selected_prompt = st.selectbox(
+    #     "프롬프트 선택",
+    #     ["prompts/general.yaml", "prompts/prompt-maker.yaml"],
+    #     index=0,
+    # )
+    # if selected_prompt == "prompts/general.yaml":
+    #     task_input = None
+    # else:       
+    #     task_input = st.text_area("프롬프트 작업 입력", "", placeholder="(ex. 어려운 수학 문제를 쉽게 설명해주기)")
+
+selected_prompt = "prompts/general.yaml"
 
 
 # 이전 대화를 출력
@@ -100,7 +84,7 @@ if user_input:
     # 사용자의 입력
     st.chat_message("user").write(user_input)
     # chain 을 생성
-    chain = create_chain(selected_prompt, task=task_input)
+    chain = create_chain(selected_prompt) #, task=task_input)
 
     # 스트리밍 호출
     response = chain.stream({"question": user_input})

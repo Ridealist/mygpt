@@ -1,10 +1,10 @@
 python-dotenv 
 streamlit
 st-gsheets-connection
-langchain_core
-langchain_openai
-langchain_teddynote
-langchain_community
+langchain-core
+langchain-openai
+langchain-teddynote
+langchain-community
 langchain-text-splitters
 faiss-cpu
 pdfplumber
