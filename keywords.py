@@ -17,7 +17,7 @@ def create_chain(prompt_filepath):
 
     # GPT
     #llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
-    llm = ChatOpenAI(model_name="gpt-4o", temperature=0, api_key=st.session_state.api_key)
+    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0, api_key=st.session_state.api_key)
 
     # 출력 파서
     output_parser = StrOutputParser()
@@ -47,7 +47,7 @@ def create_keyword(conv_history: List[ChatMessage]) -> List[str]:
     chain = create_chain(selected_prompt) #, task=task_input)
 
     if not conv_history:
-        message_context = "(대화가 아직 없습니다. 일반적인 물리 문제를 해결을 위한 질문을 2가지 추천해주세요.)"
+        message_context = "대화 기록이 아직 없습니다. 다음의 두 질문을 추천 질문으로 제시하세요. \n 1. 배운 개념이 정말 이 문제에서 쓰여? / 2. 개념을 어떻게 적용할지 모르겠어."
     else:
         message_context = parsing_messages(conv_history)
 

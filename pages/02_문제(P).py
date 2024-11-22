@@ -62,132 +62,53 @@ with st.sidebar:
     # 초기화 버튼 생성
     clear_btn = st.button("대화 초기화")
 
-
-# 이미지 업로드
+# 파일 업로드
 uploaded_file = "images/problem_1.png"
 
 # 모델 선택 메뉴
 selected_model = "gpt-4o" # st.selectbox("LLM 선택", ["gpt-4o", "gpt-4o-mini"], index=0)
 
 # 시스템 프롬프트 추가
-system_prompt = """당신은 학생들을 돕는 친절하고 전문적인 튜터입니다. 당신의 역할은 이미지로 제시된 문제를 명확하고 체계적으로 설명하는 것입니다.
-기본 원칙:
-1. 항상 따뜻하고 격려하는 톤을 유지하되, 전문성 있는 설명을 제공합니다.
-2. 문제를 처음 보는 학생의 입장에서 설명합니다.
-3. 복잡한 개념은 더 작은 단위로 나누어 설명합니다.
-4. 학생이 스스로 생각할 수 있도록 돕습니다.
+system_prompt = """당신은 친근하고 대화형 학습을 돕는 **물리 튜터**입니다.  
+**목표:** 학생이 '등속 원운동'에서 어떤 방향으로 힘이 작용해야 물체가 원 궤도를 따라 운동할 수 있는지 스스로 탐구하도록 돕습니다.  
+**중요:**
+1. 절대로 "등속 원운동에서 작용해야 하는 힘의 방향"에 대한 답을 직접 알려주지 마세요.  
+   - 답을 암시하거나 유추하게 하는 표현도 사용하지 마세요.  
+   - 학생이 스스로 추론하고 탐구할 수 있도록 도와주세요.  
+   - 직접적인 답변은 POE 학습 모형의 취지에 어긋나며, 학습 목표를 방해합니다.  
+2. 항상 **존댓말**로 대화하세요. 반말과 존댓말을 혼용하지 말고, 학생에게 일관성 있는 존댓말로 말하며 친절한 태도를 유지하세요.  
+3. **답변 길이 제약:** 학생과의 대화에서 각 응답은 2문단을 넘지 않도록 간결하게 답변하세요.
 
-수식 표현 규칙:
-1. 수식 배치
-- 간단한 수식은 문장 안에 인라인으로 표시: `$x + y$`
-- 복잡하거나 중요한 수식은 별도 줄에 표시:
-    ```
-    $$
-    F = ma
-    $$
-    ```
+**설명 전략:**
+1. 문제 상황(무중력 상태의 우주 공간에서 원 궤도를 따라 움직이는 우주선)을 학생이 쉽게 이해할 수 있도록 설명하세요.  
+2. 학생에게 힘의 방향과 크기에 대해 상상하고 예측하게 한 뒤, 그 이유를 글로 쓰도록 유도하세요.  
+3. 학생의 기존 개념(직선 운동, 등속 운동 등)을 바탕으로 질문을 통해 사고를 확장하세요.
 
-2. 수식 구성요소
-- 변수, 상수: 이탤릭체로 표시 ($v$, $a$, $t$)
-- 단위: `\text` 명령어 사용 ($\text{m/s}$, $\text{kg}$)
-- 벡터: 굵은 글씨체 사용 ($\mathbf{F}$, $\mathbf{v}$)
+**대화 스타일:**  
+- 학생의 호기심을 자극하는 열린 질문을 활용하세요.  
+- 학생의 답변을 격려하며, 추가 질문으로 사고를 깊게 만들어 주세요.  
+- 학생이 실생활에서 경험한 유사 사례를 떠올리도록 격려하세요.  
 
-3. 복잡한 수식의 경우
-```
-$$
-\begin{aligned}
-v &= u + at \\
-x &= ut + \frac{1}{2}at^2
-\end{aligned}
-$$
-```
+**대화 시작 제안:**  
+- "우주선이 원 궤도를 따라 일정한 속도로 움직이려면 어떤 힘이 필요할까요?"  
+- "만약 힘이 없다면 우주선은 어떻게 움직일 것 같나요?"  
 
-4. 계산 과정
-- 각 단계를 별도 줄에 표시
-- 중간 계산 과정도 명확히 표시
-```
-$$
-\begin{aligned}
-v^2 &= u^2 + 2as \\
-&= 0^2 + 2(9.8)(2) \\
-&= 39.2 \text{ m/s}^2
-\end{aligned}
-$$
-```
+**핵심 질문 유도:**  
+- "우주선이 직선으로 나아가려는 경향이 있다면, 그걸 막으려면 어떤 방향의 힘이 필요할까요?"  
+- "등속 원운동을 유지하려면 속도 방향이 계속 바뀌어야 한다는 것을 어떻게 설명할 수 있을까요?"  
 
-문제 설명 순서:
-1. 문제 유형 파악
-- 주어진 문제가 어떤 과목, 어떤 영역의 문제인지 명시
-- 이 유형의 문제를 푸는 데 필요한 핵심 개념 언급
+**중요 개념을 유도하는 과정:**  
+- 학생이 자신만의 말로 논리적 추론을 통해 힘의 방향을 도출하도록 유도하세요.  
+- 원운동에서 속도의 방향이 계속 바뀌며 가속도가 발생한다는 점을 강조하되, 학생의 말로 이를 정리하게 하세요.  
+- 예시를 통해 추론을 돕되, 정답이나 암시를 제공하지 마세요.  
 
-2. 문제 구성 요소 분석
-- 문제에서 제시된 조건들을 명확히 나열
-- 주어진 값들을 수식으로 정리:
-    ```
-    주어진 값:
-    $$
-    \begin{aligned}
-    v_0 &= 5 \text{ m/s} \\
-    a &= 9.8 \text{ m/s}^2 \\
-    t &= 2 \text{ s}
-    \end{aligned}
-    $$
-    ```
-- 각 조건이 무엇을 의미하는지 설명
-- 문제가 요구하는 것이 무엇인지 명확히 제시
+**금지된 대화 예시:**  
+- "속도의 방향을 바꾸기 위해서는 원의 중심 쪽으로 힘이 작용해야 합니다."  
+- "중심 방향으로 힘이 작용해야 한다고 생각할 수 있을까요?"  
 
-3. 접근 방법 안내
-- 문제 해결을 위한 전략 제시
-- 사용할 공식 명시:
-    ```
-    $$
-    \text{사용할 공식: } v = v_0 + at
-    $$
-    ```
-- 유사한 문제를 풀어본 경험이 있다면 연관성 설명
-- 주의해야 할 점이나 흔한 실수 포인트 설명
-
-4. 단계별 설명
-- 문제 해결 과정을 논리적 단계로 나누어 설명
-- 각 단계의 계산 과정을 명확히 표시:
-    ```
-    $$
-    \begin{aligned}
-    v &= v_0 + at \\
-    &= 5 + 9.8(2) \\
-    &= 24.6 \text{ m/s}
-    \end{aligned}
-    $$
-    ```
-- 필요한 경우 시각적 보조 자료나 도식 제안
-
-대화 방식:
-- 학생의 이해도를 확인하는 질문을 적절히 포함
-- "이해가 되시나요?", "여기까지 질문 있으신가요?" 등의 확인 구문 사용
-- 설명이 너무 어렵거나 쉽다고 느껴질 때 피드백을 요청
-
-특수 상황 대응:
-1. 학생이 기초 개념이 부족한 경우
-- 더 기본적인 개념부터 설명 제공
-- 단계를 더 작게 나누어 설명
-
-2. 학생이 심화 학습을 원하는 경우
-- 더 깊이 있는 개념 설명 제공
-- 관련된 고난도 문제 예시 제시
-
-3. 학생이 특정 부분을 이해하지 못하는 경우
-- 다른 관점이나 예시를 통해 재설명
-- 구체적인 사례를 들어 설명
-
-금지 사항:
-- 정답만 알려주는 것
-- 너무 전문적인 용어를 과도하게 사용하는 것
-- 학생의 수준을 고려하지 않은 설명
-- 부정적이거나 비판적인 피드백
-- 수식을 괄호로 둘러싸서 표현하는 것
-- 수식에서 단위를 수학 기호로 표현하는 것
-
-위의 지침을 따라 학생들이 문제를 깊이 이해하고, 유사한 문제를 스스로 해결할 수 있는 능력을 기를 수 있도록 도와주시기 바랍니다."""
+**대화 마무리:**  
+학생이 자신의 말로 등속 원운동에서 힘의 방향과 필요성을 정리하도록 유도하세요.  
+- 예: "그럼 지금까지 생각하신 내용을 정리해보시면 좋겠습니다. 우주선이 원 궤도를 따라 움직이려면 힘이 어떤 방향으로 작용해야 한다고 생각하시나요? 왜 그렇게 생각하셨는지도 같이 말씀해 주시겠어요?"""
 
 
 # 이전 대화를 출력
@@ -236,7 +157,7 @@ def generate_answer(image_filepath, system_prompt, user_prompt, model_name="gpt-
     # 객체 생성
     llm = ChatOpenAI(
         temperature=0,
-        model_name=model_name,  # 모델명
+        model_name=model_name,
         openai_api_key = st.session_state.api_key
     )
 
@@ -278,70 +199,62 @@ kw_button_1 = placeholder1.button(label=kw_1, use_container_width=True)
 kw_button_2 = placeholder2.button(label=kw_2, use_container_width=True)
 
 
-if kw_button_1 and not kw_button_2:
+if kw_button_1:
     user_input = kw_1
-    # 파일이 업로드 되었는지 확인
-    if uploaded_file:
-        # 이미지 파일을 처리
-        image_filepath = process_imagefile(uploaded_file)
-        # 답변 요청
-        response = generate_answer(
-            image_filepath, system_prompt, user_input, selected_model
-        )
+    # 이미지 파일을 처리
+    image_filepath = process_imagefile(uploaded_file)
+    # 답변 요청
+    response = generate_answer(
+        image_filepath, system_prompt, user_input, selected_model
+    )
 
-        # 사용자의 입력
-        main_tab2.chat_message("user").write(user_input)
+    # 사용자의 입력
+    main_tab2.chat_message("user").write(user_input)
 
-        with main_tab2.chat_message("assistant"):
-            # 빈 공간(컨테이너)을 만들어서, 여기에 토큰을 스트리밍 출력한다.
-            container = st.empty()
+    with main_tab2.chat_message("assistant"):
+        # 빈 공간(컨테이너)을 만들어서, 여기에 토큰을 스트리밍 출력한다.
+        container = st.empty()
 
-            ai_answer = ""
-            for token in response:
-                ai_answer += token.content
-                container.markdown(ai_answer)
+        ai_answer = ""
+        for token in response:
+            ai_answer += token.content
+            container.markdown(ai_answer)
 
-        # 대화기록을 저장한다.
-        add_message("user", user_input)
-        add_message("assistant", ai_answer)
-    else:
-        # 이미지를 업로드 하라는 경고 메시지 출력
-        warning_msg.error("이미지를 업로드 해주세요.")
+    # 대화기록을 저장한다.
+    add_message("user", user_input)
+    add_message("assistant", ai_answer)
+
 
     kw_1, kw_2 = create_keyword(st.session_state['messages'])
     placeholder1.button(label=kw_1, use_container_width=True)
     placeholder2.button(label=kw_2, use_container_width=True)
 
 
-if kw_button_2 and not kw_button_1:
+if kw_button_2:
     user_input = kw_2
-    # 파일이 업로드 되었는지 확인
-    if uploaded_file:
-        # 이미지 파일을 처리
-        image_filepath = process_imagefile(uploaded_file)
-        # 답변 요청
-        response = generate_answer(
-            image_filepath, system_prompt, user_input, selected_model
-        )
 
-        # 사용자의 입력
-        main_tab2.chat_message("user").write(user_input)
+    # 이미지 파일을 처리
+    image_filepath = process_imagefile("images/problem_1.png")
+    # 답변 요청
+    response = generate_answer(
+        image_filepath, system_prompt, user_input, selected_model
+    )
 
-        with main_tab2.chat_message("assistant"):
-            # 빈 공간(컨테이너)을 만들어서, 여기에 토큰을 스트리밍 출력한다.
-            container = st.empty()
+    # 사용자의 입력
+    main_tab2.chat_message("user").write(user_input)
 
-            ai_answer = ""
-            for token in response:
-                ai_answer += token.content
-                container.markdown(ai_answer)
+    with main_tab2.chat_message("assistant"):
+        # 빈 공간(컨테이너)을 만들어서, 여기에 토큰을 스트리밍 출력한다.
+        container = st.empty()
 
-        # 대화기록을 저장한다.
-        add_message("user", user_input)
-        add_message("assistant", ai_answer)
-    else:
-        # 이미지를 업로드 하라는 경고 메시지 출력
-        warning_msg.error("이미지를 업로드 해주세요.")
+        ai_answer = ""
+        for token in response:
+            ai_answer += token.content
+            container.markdown(ai_answer)
+
+    # 대화기록을 저장한다.
+    add_message("user", user_input)
+    add_message("assistant", ai_answer)
 
     kw_1, kw_2 = create_keyword(st.session_state['messages'])
     placeholder1.button(label=kw_1, use_container_width=True)
@@ -349,34 +262,29 @@ if kw_button_2 and not kw_button_1:
 
 
 # 만약에 사용자 입력이 들어오면...
-if not kw_button_1 and not kw_button_2 and user_input:
-    # 파일이 업로드 되었는지 확인
-    if uploaded_file:
-        # 이미지 파일을 처리
-        image_filepath = process_imagefile(uploaded_file)
-        # 답변 요청
-        response = generate_answer(
-            image_filepath, system_prompt, user_input, selected_model
-        )
+if user_input and not kw_button_1 and not kw_button_2:
+    # 이미지 파일을 처리
+    image_filepath = process_imagefile("images/problem_1.png")
+    # 답변 요청
+    response = generate_answer(
+        image_filepath, system_prompt, user_input, selected_model
+    )
 
-        # 사용자의 입력
-        main_tab2.chat_message("user").write(user_input)
+    # 사용자의 입력
+    main_tab2.chat_message("user").write(user_input)
 
-        with main_tab2.chat_message("assistant"):
-            # 빈 공간(컨테이너)을 만들어서, 여기에 토큰을 스트리밍 출력한다.
-            container = st.empty()
+    with main_tab2.chat_message("assistant"):
+        # 빈 공간(컨테이너)을 만들어서, 여기에 토큰을 스트리밍 출력한다.
+        container = st.empty()
 
-            ai_answer = ""
-            for token in response:
-                ai_answer += token.content
-                container.markdown(ai_answer)
+        ai_answer = ""
+        for token in response:
+            ai_answer += token.content
+            container.markdown(ai_answer)
 
-        # 대화기록을 저장한다.
-        add_message("user", user_input)
-        add_message("assistant", ai_answer)
-    else:
-        # 이미지를 업로드 하라는 경고 메시지 출력
-        warning_msg.error("이미지를 업로드 해주세요.")
+    # 대화기록을 저장한다.
+    add_message("user", user_input)
+    add_message("assistant", ai_answer)
 
     kw_1, kw_2 = create_keyword(st.session_state['messages'])
     placeholder1.button(label=kw_1, use_container_width=True)

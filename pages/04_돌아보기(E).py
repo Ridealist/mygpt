@@ -1,5 +1,3 @@
-import glob
-import settings
 import streamlit as st
 
 from langchain_core.messages.chat import ChatMessage

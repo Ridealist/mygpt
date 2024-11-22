@@ -10,3 +10,4 @@ faiss-cpu
 pdfplumber
 IPython
 pandasql
+plotly
