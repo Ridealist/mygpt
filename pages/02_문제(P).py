@@ -1,16 +1,17 @@
 import os
-import settings
+import io
 import streamlit as st
+from PIL import Image
+from datetime import datetime
+
+from streamlit_drawable_canvas import st_canvas
 
 from langchain_core.messages.chat import ChatMessage
 from langchain_openai import ChatOpenAI
 from langchain_teddynote import logging
 from langchain_teddynote.models import MultiModal
 
-from keywords import create_keyword
-
-from PIL import Image
-import io
+from modules.keywords import create_keyword
 
 # API KEY 정보로드
 # config = settings.load_config()
@@ -42,25 +43,85 @@ if not os.path.exists(".cache/files"):
 if not os.path.exists(".cache/embeddings"):
     os.mkdir(".cache/embeddings")
 
-st.title("문제 해결하기 📄")
+st.title("문제 살펴보기 📄")
+st.text("다음 문제 상황의 정답을 예상해보고, 그 예상의 이유를 적어봅시다.")
 
 # 처음 1번만 실행하기 위한 코드
-if "messages" not in st.session_state:
+if "messages_predict" not in st.session_state:
     # 대화기록을 저장하기 위한 용도로 생성한다.
-    st.session_state["messages"] = []
+    st.session_state["messages_predict"] = []
+
+if "submit_button_disabled" not in st.session_state:
+    st.session_state["submit_button_disabled"] = True
 
 # 탭을 생성
 
 # main_tab1, main_tab2 = st.tabs(["오늘의 문제", "대화 내용"])
 
-
 main_tab1 = st.container(border=True)
 main_tab2 = st.container(border=False)
+
+# stroke_color = st.sidebar.color_picker("Stroke color hex: ")
+# bg_color = st.sidebar.color_picker("Background color hex: ", "#eee")
+# realtime_update = st.sidebar.checkbox("Update in realtime", True)
+
+def save_draw_image(numpy_array):
+    image = Image.fromarray(numpy_array)
+    current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    file_name = f"p-drawing-{current_time}"
+    image.save(f"draw_images/{file_name}.png", format="PNG")
+    # return st.info("이미지 저장됨")
+
+def enalble_submit_button():
+    st.session_state["submit_button_disabled"] = False
+
+def disalble_submit_button():
+    st.session_state["submit_button_disabled"] = True
 
 # 사이드바 생성
 with st.sidebar:
     # 초기화 버튼 생성
-    clear_btn = st.button("대화 초기화")
+    # clear_btn = st.button("대화 초기화")
+
+    st.text("문제의 답을 예상해보세요.")
+    # Create a canvas component
+    canvas_result = st_canvas(
+        fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+        stroke_width=3,
+        stroke_color="#000000",
+        background_color="#EEEEEE",
+        background_image=None,
+        update_streamlit=True,
+        height=400,
+        width=400,
+        drawing_mode="freedraw",
+        point_display_radius=0,
+        key="canvas",
+    )
+
+    reason = st.text_area(
+        label="예상의 이유를 자세히 적어보세요.",
+        placeholder="- 화살표(힘)의 방향이 어디로 향해야 할지\n- 왜 화살표(힘)의 방향이 그래야 하는지",
+        height=200,
+        on_change=enalble_submit_button
+    )
+
+    if not reason:
+        disalble_submit_button()
+
+    submit_button = st.button(
+        label="제출하기",
+        type="primary",
+        use_container_width=True,
+        on_click=save_draw_image,
+        args=[canvas_result.image_data],
+        disabled=st.session_state["submit_button_disabled"]
+    )
+
+    if submit_button:
+        st.session_state["predict_user_drawing"] = canvas_result.image_data
+        st.session_state["predict_user_reason"] = reason
+        st.success("제출 완료!")
 
 # 파일 업로드
 uploaded_file = "images/problem_1.png"
@@ -113,13 +174,13 @@ system_prompt = """당신은 친근하고 대화형 학습을 돕는 **물리 �
 
 # 이전 대화를 출력
 def print_messages():
-    for chat_message in st.session_state["messages"]:
+    for chat_message in st.session_state["messages_predict"]:
         main_tab2.chat_message(chat_message.role).write(chat_message.content)
 
 
 # 새로운 메시지를 추가
 def add_message(role, message):
-    st.session_state["messages"].append(ChatMessage(role=role, content=message))
+    st.session_state["messages_predict"].append(ChatMessage(role=role, content=message))
 
 
 # Function to convert PNG to BytesIO
@@ -169,9 +230,9 @@ def generate_answer(image_filepath, system_prompt, user_prompt, model_name="gpt-
     return answer
 
 
-# 초기화 버튼이 눌리면...
-if clear_btn:
-    st.session_state["messages"] = []
+# # 초기화 버튼이 눌리면...
+# if clear_btn:
+#     st.session_state["messages"] = []
 
 col1, col2 = st.columns(2)
 placeholder1 = col1.empty()
@@ -181,7 +242,7 @@ placeholder2 = col2.empty()
 print_messages()
 
 # 사용자의 입력
-user_input = st.chat_input("궁금한 내용을 물어보세요!")
+user_input = st.chat_input("🤖 AI튜터에게 궁금한 내용을 물어보세요!")
 
 # 경고 메시지를 띄우기 위한 빈 영역
 warning_msg = main_tab2.empty()
@@ -194,7 +255,7 @@ if uploaded_file:
 
 
 #TODO 키워드 질문 처리
-kw_1, kw_2 = create_keyword(st.session_state['messages'])
+kw_1, kw_2 = create_keyword(st.session_state["messages_predict"])
 kw_button_1 = placeholder1.button(label=kw_1, use_container_width=True)
 kw_button_2 = placeholder2.button(label=kw_2, use_container_width=True)
 
@@ -225,7 +286,7 @@ if kw_button_1:
     add_message("assistant", ai_answer)
 
 
-    kw_1, kw_2 = create_keyword(st.session_state['messages'])
+    kw_1, kw_2 = create_keyword(st.session_state["messages_predict"])
     placeholder1.button(label=kw_1, use_container_width=True)
     placeholder2.button(label=kw_2, use_container_width=True)
 
@@ -256,7 +317,7 @@ if kw_button_2:
     add_message("user", user_input)
     add_message("assistant", ai_answer)
 
-    kw_1, kw_2 = create_keyword(st.session_state['messages'])
+    kw_1, kw_2 = create_keyword(st.session_state["messages_predict"])
     placeholder1.button(label=kw_1, use_container_width=True)
     placeholder2.button(label=kw_2, use_container_width=True)
 
@@ -286,6 +347,6 @@ if user_input and not kw_button_1 and not kw_button_2:
     add_message("user", user_input)
     add_message("assistant", ai_answer)
 
-    kw_1, kw_2 = create_keyword(st.session_state['messages'])
+    kw_1, kw_2 = create_keyword(st.session_state["messages_predict"])
     placeholder1.button(label=kw_1, use_container_width=True)
     placeholder2.button(label=kw_2, use_container_width=True)

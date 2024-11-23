@@ -9,6 +9,7 @@ st.title("📚얘들아 물리 쉬워✨")
 
 st.session_state.api_key = st.secrets["openai_api_key"]
 
+
 ## 학생에게 api-key를 입력하게 할 경우
 ## ------(아래 주석을 해제해주세요)------
 # api_key = st.text_input("🔑 새로운 OPENAI API Key", type="password")
@@ -30,23 +31,7 @@ if "messages" not in st.session_state:
 with st.sidebar:
 
     if st.secrets["openai_api_key"]:
-        st.write(f'API키 세팅 완료: {st.secrets["openai_api_key"][-5:]}')
-
-    # 초기화 버튼 생성
-    clear_btn = st.button("대화 초기화")
-
-    # # prompt_files = glob.glob("prompts/*.yaml")
-    # selected_prompt = st.selectbox(
-    #     "프롬프트 선택",
-    #     ["prompts/general.yaml", "prompts/prompt-maker.yaml"],
-    #     index=0,
-    # )
-    # if selected_prompt == "prompts/general.yaml":
-    #     task_input = None
-    # else:       
-    #     task_input = st.text_area("프롬프트 작업 입력", "", placeholder="(ex. 어려운 수학 문제를 쉽게 설명해주기)")
-
-selected_prompt = "prompts/general.yaml"
+        st.success(f'API키 세팅 완료: {st.secrets["openai_api_key"][-5:]}')
 
 
 st.subheader("오늘 배운 물리 개념은?")

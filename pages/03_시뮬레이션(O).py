@@ -5,7 +5,6 @@ from typing import List
 from langchain_core.messages.chat import ChatMessage
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, BaseMessage
-from langchain_core.prompts.prompt import PromptTemplate
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
@@ -17,10 +16,19 @@ import simulation.simulation as simulation
 
 st.session_state.api_key = st.secrets["openai_api_key"]
 
+if "submit_button_disabled" not in st.session_state:
+    st.session_state["submit_button_disabled"] = True
 
 if "tutor_messages" not in st.session_state:
     # 대화기록을 저장하기 위한 용도로 생성한다.
     st.session_state["tutor_messages"] = []
+
+
+def enalble_submit_button():
+    st.session_state["submit_button_disabled"] = False
+
+def disalble_submit_button():
+    st.session_state["submit_button_disabled"] = True
 
 
 def output_parser(response: str) -> str:
@@ -53,8 +61,8 @@ def get_by_session_id(session_id: str) -> BaseChatMessageHistory:
         store[session_id] = InMemoryHistory()
     return store[session_id]
 
-
-st.title("물리 시뮬레이션 실험실 🧪")
+st.title("시뮬레이션 실험실 🧪")
+st.text("다양하게 시뮬레이션을 해보고 관찰한 사실에 대해 적어봅시다.")
 
 main_tab1 = st.container(border=True)
 main_tab1.subheader("문제 상황")
@@ -131,6 +139,7 @@ def generate_chain(model_name="gpt-4o-mini"):
 # 사이드바 생성
 with st.sidebar:
     # 초기화 버튼 생성
+    st.text("물리 AI")
     messages = st.container(height=300)
         
     def print_messages():
@@ -144,7 +153,7 @@ with st.sidebar:
     # 이전 대화 기록 출력
     print_messages()
 
-    if user_input := st.chat_input("궁금한 내용을 물어보세요!"):
+    if user_input := st.chat_input("🤖 AI튜터에게 궁금한 내용을 물어보세요!"):
 
         conv_chain = generate_chain(selected_model)
 
@@ -166,6 +175,27 @@ with st.sidebar:
         # 대화기록을 저장한다.
         add_message("user", user_input)
         add_message("assistant", ai_answer)
+
+    facts = st.text_area(
+        label="관찰한 사실을 자세히 적어보세요.",
+        placeholder="- 변수 조작에 따라 움직임이 달라진 점\n- 예측했던 것과 관찰한 결과가 다른점",
+        height=200,
+        on_change=enalble_submit_button
+    )
+
+    if not facts:
+        disalble_submit_button()
+
+    submit_button = st.button(
+        label="제출하기",
+        type="primary",
+        use_container_width=True,
+        disabled=st.session_state["submit_button_disabled"]
+    )
+
+    if submit_button:
+        st.session_state["observation_user_facts"] = facts
+        st.success("제출 완료!")
 
 
 st.subheader("시뮬레이션 실험")
