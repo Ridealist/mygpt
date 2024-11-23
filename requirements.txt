@@ -1,6 +1,7 @@
 python-dotenv 
 streamlit
 st-gsheets-connection
+streamlit-drawable-canvas
 langchain-core
 langchain-openai
 langchain-teddynote
