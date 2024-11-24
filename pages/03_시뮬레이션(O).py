@@ -139,7 +139,7 @@ def generate_chain(model_name="gpt-4o-mini"):
 # 사이드바 생성
 with st.sidebar:
     # 초기화 버튼 생성
-    st.text("물리 AI")
+    st.text("AI튜터와 대화하기")
     messages = st.container(height=300)
         
     def print_messages():

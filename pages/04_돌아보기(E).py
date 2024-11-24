@@ -66,6 +66,7 @@ with tab2:
 with st.sidebar:
 
     st.text("최종적으로 문제를 해결해보세요.")
+    st.text("(아래 캔버스에 생각한 내용을 그려보세요🎨)")
     # Create a canvas component
     canvas_result = st_canvas(
         fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity

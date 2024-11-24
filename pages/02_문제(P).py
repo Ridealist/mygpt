@@ -84,6 +84,7 @@ with st.sidebar:
     # clear_btn = st.button("대화 초기화")
 
     st.text("문제의 답을 예상해보세요.")
+    st.text("(아래 캔버스에 생각한 내용을 그려보세요🎨)")
     # Create a canvas component
     canvas_result = st_canvas(
         fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
