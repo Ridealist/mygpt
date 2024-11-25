@@ -1,5 +1,6 @@
 import streamlit as st
 import io
+import os
 
 from PIL import Image
 from datetime import datetime
@@ -11,6 +12,11 @@ from langchain_openai import ChatOpenAI
 from modules.multimodal import MultiModalwithHistory
 
 st.session_state.api_key = st.secrets["openai_api_key"]
+
+os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["LANGCHAIN_TRACING_V2"]
+os.environ["LANGCHAIN_API_KEY"] = st.secrets["LANGCHAIN_API_KEY"]
+os.environ["LANGCHAIN_ENDPOINT"] = st.secrets["LANGCHAIN_ENDPOINT"]
+os.environ["LANGCHAIN_PROJECT"] = st.secrets["LANGCHAIN_PROJECT"]
 
 st.session_state["init_user_input"] = False
 
