@@ -47,7 +47,7 @@ def create_keyword(conv_history: List[ChatMessage]) -> List[str]:
     chain = create_chain(selected_prompt) #, task=task_input)
 
     if not conv_history:
-        message_context = "대화 기록이 아직 없습니다. 다음의 두 질문을 추천 질문으로 제시하세요. \n 1. 배운 개념이 정말 이 문제에서 쓰여? / 2. 개념을 어떻게 적용할지 모르겠어."
+        message_context = "대화 기록이 아직 없습니다. 다음의 두 질문을 추천 질문으로 제시하세요. \n 1. 배운 개념이 이 문제에 어떻게 적용될 수 있는지 구체적인 예를 들어줄 수 있어? / 2. 등속 원운동이 어떤 건지 관련된 개념과 함께 설명해 줄 수 있어?"
     else:
         message_context = parsing_messages(conv_history)
 

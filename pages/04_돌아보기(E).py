@@ -49,6 +49,8 @@ def disalble_submit_button():
 
 
 st.title("문제 돌아보기 ✅")
+st.info("""왼쪽 캔버스에 최종적으로 생각한 **(1)정답**과 함께 그렇게 생각한 **(2)이유**를 적어주세요. \n
+정답을 적으면 오른쪽 '문제 정답' 탭에 채점 결과와 피드백이 나옵니다.""")
 
 tab1, tab2 = st.tabs(["문제 상황", "문제 정답"])
 
@@ -301,3 +303,29 @@ if "explanation_user_drawing" in st.session_state and "explanation_user_reason" 
             # 대화기록을 저장한다.
             add_message("user", user_input)
             add_message("assistant", ai_answer)
+
+
+# Create columns with specific ratios
+col1, col2, col3 = st.columns([5, 2, 3])
+
+# Place the button in the last column
+with col1:
+    if st.button(
+        label="이전단계로 넘어가기",
+        key="prev_button",
+        icon="⏪",
+        help="시뮬레이션(O)으로 넘어가기",
+        type="primary"
+    ):
+        st.switch_page("pages/03_시뮬레이션(O).py")
+
+# Place the button in the last column
+with col3:
+    if st.button(
+        label="다음단계로 넘어가기",
+        key="next_button",
+        icon="⏩",
+        help="적용하기(A)로 넘어가기",
+        type="primary"
+    ):
+        st.switch_page("pages/05_적용하기(A).py")

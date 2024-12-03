@@ -50,7 +50,6 @@ if not os.path.exists(".cache/embeddings"):
 
 st.title("문제 살펴보기 📄")
 st.text("다음 문제 상황의 정답을 예상해보고, 그 예상의 이유를 적어봅시다.")
-
 # 처음 1번만 실행하기 위한 코드
 if "messages_predict" not in st.session_state:
     # 대화기록을 저장하기 위한 용도로 생성한다.
@@ -128,6 +127,7 @@ with st.sidebar:
         st.session_state["predict_user_drawing"] = canvas_result.image_data
         st.session_state["predict_user_reason"] = reason
         st.success("제출 완료!")
+        st.info("정답은 돌아보기(E) 단계에서 확인할 수 있습니다! 다음 단계로 넘어가세요:)")
 
 # 파일 업로드
 uploaded_file = "images/problem_1.png"
@@ -356,3 +356,26 @@ if user_input and not kw_button_1 and not kw_button_2:
     kw_1, kw_2 = create_keyword(st.session_state["messages_predict"])
     placeholder1.button(label=kw_1, use_container_width=True)
     placeholder2.button(label=kw_2, use_container_width=True)
+
+# Create columns with specific ratios
+col1, col2, col3 = st.columns([5, 2, 3])
+
+# Place the button in the last column
+with col1:
+    if st.button(
+        label="이전단계로 넘어가기",
+        icon="⏪",
+        help="도입으로 넘어가기",
+        type="primary"
+    ):
+        st.switch_page("도입.py")
+
+# Place the button in the last column
+with col3:
+    if st.button(
+        label="다음단계로 넘어가기",
+        icon="⏩",
+        help="시뮬레이션(O)로 넘어가기",
+        type="primary"
+    ):
+        st.switch_page("pages/03_시뮬레이션(O).py")
