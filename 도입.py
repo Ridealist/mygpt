@@ -135,7 +135,7 @@ def create_chain(retriever, prompt_path="prompts/doc-rag.yaml", model_name="gpt-
 
 
 # 파일 업로드 후 retriever 생성 (작업시간이 오래 걸릴 예정...)
-retriever = embed_file("/Users/ridealist/Desktop/physics-tutor/textbooks/physics_textbook_trancated.pdf")
+retriever = embed_file("textbooks/physics_textbook_trancated.pdf")
 selected_model = "gpt-4o"
 selected_prompt = "prompts/doc-rag.yaml"
 
