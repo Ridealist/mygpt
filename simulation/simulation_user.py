@@ -75,24 +75,31 @@ def init_simulation_state():
             'simulation_running': False,
             'show_velocity_vector': False,
             'show_force_vector': True,
-            'show_acceleration_vector': False,  # 가속도 벡터 표시 추가
             'slow_motion_factor': 1.0  # 0.2에서 1.0으로 변경하여 5배 빠르게
         }
 
 def calculate_force(position):
-    target_position = [st.session_state.simulation_state['width']/2, 
+    center_position = [st.session_state.simulation_state['width']/2, 
                        st.session_state.simulation_state['height']/2]
-    dx = target_position[0] - position[0]  # 목표 위치에서 현재 위치를 뺌
-    dy = target_position[1] - position[1]
-    distance = math.sqrt(dx ** 2 + dy ** 2)
-    
-    if distance == 0:
-        return [0, 0]  # 중심에 있을 경우 힘이 0
+    dx = position[0] - center_position[0]
+    dy = position[1] - center_position[1]
 
-    # 힘의 크기 조정: 거리의 제곱에 반비례
+    # 현재 위치에서 중심까지의 거리 계산
+    distance = math.sqrt(dx ** 2 + dy ** 2)
+
+    # 접선 방향을 구하기 위해 중심에서의 벡터를 정규화
+    if distance == 0:
+        return [0, 0]  # 중심에 위치할 경우 힘이 0이 됨
+
+    # 접선 벡터는 중심에서의 벡터를 시계 방향으로 90도 회전
+    tangent_vector = [-dy / distance, dx / distance]
+
+    # 힘의 크기
     force_magnitude = (st.session_state.simulation_state['ball_mass'] * 
-                       (st.session_state.simulation_state['initial_speed'] ** 2)) / (distance ** 2 + 1e-6)  # 0으로 나누는 문제 방지
-    force = [force_magnitude * dx / distance, force_magnitude * dy / distance]
+                       (st.session_state.simulation_state['initial_speed']**2)) / distance
+
+    # 접선 방향으로 힘 계산
+    force = [force_magnitude * tangent_vector[0], force_magnitude * tangent_vector[1]]
     return force
 
 def update_position(dt):
@@ -102,7 +109,7 @@ def update_position(dt):
     force = calculate_force(state['position'])
     
     # 가속도 계산 (F = ma)
-    acceleration = [f / state['ball_mass'] for f in force]
+    acceleration = [f/state['ball_mass'] for f in force]
     
     # 속도 업데이트 (v = v0 + at)
     state['velocity'][0] += acceleration[0] * dt
@@ -127,8 +134,8 @@ def create_simulation_plot():
     radius = 100
     
     fig.add_trace(go.Scatter(
-        x=center_x + radius * np.cos(theta),
-        y=center_y + radius * np.sin(theta),
+        x=center_x + radius*np.cos(theta),
+        y=center_y + radius*np.sin(theta),
         mode='lines',
         line=dict(color='black', width=1),
         name='orbit'
@@ -139,7 +146,7 @@ def create_simulation_plot():
         x=[center_x],
         y=[center_y],
         mode='markers',
-        marker=dict(color='red', size=12),  # 크기 조정
+        marker=dict(color='red', size=10),
         name='center'
     ))
     
@@ -151,7 +158,7 @@ def create_simulation_plot():
             x=trajectory_x,
             y=trajectory_y,
             mode='markers',
-            marker=dict(color='lightgrey', size=2),
+            marker=dict(color='black', size=2),
             name='trajectory'
         ))
     
@@ -160,12 +167,12 @@ def create_simulation_plot():
         x=[state['position'][0]],
         y=[state['position'][1]],
         mode='markers',
-        marker=dict(color='orange', size=20),  # 크기 조정
+        marker=dict(color='blue', size=15),
         name='ball'
     ))
     
     # 벡터 그리기
-    vector_ratio = 0.1  # 벡터의 길이를 상대적으로 줄임
+    vector_ratio = 0.15
     if state['show_velocity_vector']:
         velocity_end = [
             state['position'][0] + state['velocity'][0] * vector_ratio,
@@ -175,7 +182,7 @@ def create_simulation_plot():
             x=[state['position'][0], velocity_end[0]],
             y=[state['position'][1], velocity_end[1]],
             mode='lines',
-            line=dict(color='blue', width=3),  # 두께 조정
+            line=dict(color='blue', width=2),
             name='velocity'
         ))
     
@@ -189,23 +196,8 @@ def create_simulation_plot():
             x=[state['position'][0], force_end[0]],
             y=[state['position'][1], force_end[1]],
             mode='lines',
-            line=dict(color='green', width=3, dash='dot'),  # 두께 조정 및 점선 유지
+            line=dict(color='green', width=2),
             name='force'
-        ))
-    
-    if state['show_acceleration_vector']:  # 가속도 벡터 표시 추가
-        force = calculate_force(state['position'])
-        acceleration = [f/state['ball_mass'] for f in force]
-        acceleration_end = [
-            state['position'][0] + acceleration[0] * vector_ratio,
-            state['position'][1] + acceleration[1] * vector_ratio
-        ]
-        fig.add_trace(go.Scatter(
-            x=[state['position'][0], acceleration_end[0]],
-            y=[state['position'][1], acceleration_end[1]],
-            mode='lines',
-            line=dict(color='purple', width=3, dash='dash'),  # 두께 조정 및 점선으로 표시
-            name='acceleration'
         ))
     
     fig.update_layout(
@@ -214,14 +206,14 @@ def create_simulation_plot():
         showlegend=False,
         xaxis=dict(
             range=[0, state['width']],
-            scaleanchor="y",
-            scaleratio=1,
+            scaleanchor="y",  # y축과 스케일 고정
+            scaleratio=1,     # 1:1 비율 유지
         ),
         yaxis=dict(
             range=[0, state['height']],
         ),
         margin=dict(l=0, r=0, t=0, b=0),
-        plot_bgcolor='white',
+        plot_bgcolor='white',  # 배경색 설정
     )
     
     return fig
@@ -233,7 +225,7 @@ def main():
     init_simulation_state()
     
     # 컨트롤 버튼들
-    col1, col2, col3, col4, col5 = st.columns(5)  # 컬럼 수 변경
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         try:
             button1 = st.button("시뮬레이션 시작/정지", key=st.session_state.button1_key)
@@ -269,7 +261,7 @@ def main():
         if button3:
             st.session_state.simulation_state['show_velocity_vector'] = \
                 not st.session_state.simulation_state['show_velocity_vector']
-
+    
     with col4:
         try:
             button4 = st.button("힘 벡터 표시", key=st.session_state.button4_key)
@@ -280,16 +272,6 @@ def main():
         if button4:
             st.session_state.simulation_state['show_force_vector'] = \
                 not st.session_state.simulation_state['show_force_vector']
-    
-    with col5:  # 새로운 버튼 컬럼 추가
-        try:
-            button5 = st.button("가속도 벡터 표시", key='acceleration_vector')
-        except:
-            button5 = st.button("가속도 벡터 표시", key='acceleration_vector')
-        
-        if button5:
-            st.session_state.simulation_state['show_acceleration_vector'] = \
-                not st.session_state.simulation_state['show_acceleration_vector']
     
     # 시뮬레이션 실행
     if st.session_state.simulation_state['simulation_running']:
@@ -305,4 +287,5 @@ def main():
     st.empty()
     st.rerun()
 
+if __name__ == "__main__":
     main()
