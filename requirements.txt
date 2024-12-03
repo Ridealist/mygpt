@@ -12,3 +12,4 @@ pdfplumber
 IPython
 pandasql
 plotly
+PyPDF2

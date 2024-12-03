@@ -9,7 +9,6 @@ __pycache__
 .DS_Store
 
 # 이미지 파일
-*.png
 *.jpg
 *.jpeg
 *.gif
