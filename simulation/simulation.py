@@ -1,279 +1,193 @@
 # 시뮬레이션 코드
-import uuid
+import os
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
 import math
 from datetime import datetime
+import time
 
-
-# 버튼 key 초기화
-if 'button1_key' not in st.session_state:
-    button1_key = str(uuid.uuid4())[:8]
-    st.session_state.button1_key = button1_key
-
-if 'button2_key' not in st.session_state:
-    button2_key = str(uuid.uuid4())[:8]
-    st.session_state.button2_key = button2_key
-
-if 'button3_key' not in st.session_state:
-    button3_key = str(uuid.uuid4())[:8]
-    st.session_state.button3_key = button3_key
-
-if 'button4_key' not in st.session_state:
-    button4_key = str(uuid.uuid4())[:8]
-    st.session_state.button4_key = button4_key
-
-# 버튼 key 초기화 함수
-def initialize_button1_key():
-    button1_key = str(uuid.uuid4())[:8]
-    st.session_state.button1_key = button1_key
-
-def initialize_button2_key():
-    button2_key = str(uuid.uuid4())[:8]
-    st.session_state.button2_key = button2_key
-
-def initialize_button3_key():
-    button3_key = str(uuid.uuid4())[:8]
-    st.session_state.button3_key = button3_key
-
-def initialize_button4_key():
-    button4_key = str(uuid.uuid4())[:8]
-    st.session_state.button4_key = button4_key
-
+# 파일 상단에 추가
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+ORBIT_RADIUS = 100
+BALL_MASS = 1
+BALL_RADIUS = 10
+INITIAL_SPEED = 200
+VECTOR_SCALE = 0.15
+FPS = 60
+center_x = WINDOW_WIDTH // 2
+center_y = WINDOW_HEIGHT // 2
 
 def init_simulation_state():
     if 'simulation_state' not in st.session_state:
-        # 궤도 반지름 정의
-        orbit_radius = 100
-        
-        # 중심점 계산
-        center_x = 400  # width/2
-        center_y = 300  # height/2
-        
-        # 초기 위치를 궤도 위 3시 방향으로 설정
-        initial_x = center_x + orbit_radius
-        initial_y = center_y
-        
-        # 초기 속도를 접선 방향(위쪽)으로 설정
-        speed = 200
-        initial_vx = 0
-        initial_vy = -speed  # 접선 방향(위쪽)으로 속도 설정
         
         st.session_state.simulation_state = {
-            'width': 800,
-            'height': 600,
-            'ball_mass': 1,
-            'ball_radius': 10,
-            'initial_speed': speed,
-            'launch_angle': 0,
-            'position': [initial_x, initial_y],  # 궤도 위 시작점
-            'velocity': [initial_vx, initial_vy],  # 접선 방향 속도
+            'position': [center_x + ORBIT_RADIUS, center_y],
+            'velocity': [0, INITIAL_SPEED],
             'trajectory_points': [],
-            'force_vectors': [],
-            'last_recorded_time': datetime.now(),
             'simulation_running': False,
-            'show_velocity_vector': False,
-            'show_force_vector': True,
-            'slow_motion_factor': 1.0  # 0.2에서 1.0으로 변경하여 5배 빠르게
+            'show_velocity_vector': True,
+            'show_force_vector': False,
         }
 
-def calculate_force(position):
-    target_position = [st.session_state.simulation_state['width']/2, 
-                    st.session_state.simulation_state['height']/2]
-    dx = target_position[0] - position[0]
-    dy = target_position[1] - position[1]
-    distance = math.sqrt(dx ** 2 + dy ** 2)
+# 힘 계산 함수.
+def calculate_force(position, velocity):
+    center = np.array([WINDOW_WIDTH/2, WINDOW_HEIGHT/2])
+    pos = np.array(position)
+    r = pos - center
+    distance = np.linalg.norm(r)
+    centripetal_force_magnitude = -BALL_MASS * INITIAL_SPEED**2 / distance
+    centripetal_force_vector = centripetal_force_magnitude * r / distance # 구심력 크기에 방향 벡터 곱해준거임
+    resultant_force = centripetal_force_vector
     
-    force_magnitude = (st.session_state.simulation_state['ball_mass'] * 
-                    (st.session_state.simulation_state['initial_speed']**2)) / distance
-    force = [force_magnitude * dx / distance, force_magnitude * dy / distance]
-    return force
+    return resultant_force
 
+# 위치 업데이트 함수.
 def update_position(dt):
     state = st.session_state.simulation_state
+    force = calculate_force(state['position'], state['velocity'])
+    acceleration = force / BALL_MASS
     
-    # 힘 계산
-    force = calculate_force(state['position'])
+    # 벡터 연산으로 단순화
+    state['velocity'] = [v + a * dt for v, a in zip(state['velocity'], acceleration)]
+    state['position'] = [p + v * dt for p, v in zip(state['position'], state['velocity'])]
     
-    # 가속도 계산 (F = ma)
-    acceleration = [f/state['ball_mass'] for f in force]
-    
-    # 속도 업데이트 (v = v0 + at)
-    state['velocity'][0] += acceleration[0] * dt
-    state['velocity'][1] += acceleration[1] * dt
-    
-    # 위치 업데이트 (x = x0 + vt)
-    state['position'][0] += state['velocity'][0] * dt
-    state['position'][1] += state['velocity'][1] * dt
-    
-    # 궤적 저장
+    # 궤적 점 개수 제한 (예: 최대 50개)
+    MAX_TRAJECTORY_POINTS = 500
     state['trajectory_points'].append(state['position'].copy())
+    if len(state['trajectory_points']) > MAX_TRAJECTORY_POINTS:
+        state['trajectory_points'].pop(0)  # 가장 오래된 점 제거
 
+# 벡터 표시 함수.
+def create_arrow(start, end, color):
+    # 리스트를 NumPy 배열로 변환
+    start = np.array(start)
+    end = np.array(end)
+    
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    
+    length = np.linalg.norm(end - start)
+    if np.all(length == 0):
+        return None
+        
+    unit_vector = np.array([dx, dy]) / length
+    arrow_head_length = 20
+    angle = np.radians(30)
+    
+    rot_matrix = np.array([[np.cos(angle), -np.sin(angle)],
+                          [np.sin(angle), np.cos(angle)]])
+    
+    head1 = end - arrow_head_length * (rot_matrix @ unit_vector)
+    head2 = end - arrow_head_length * (rot_matrix.T @ unit_vector)
+    
+    arrow_x = [start[0], end[0], None, end[0], head1[0], None, end[0], head2[0]]
+    arrow_y = [start[1], end[1], None, end[1], head1[1], None, end[1], head2[1]]
+    
+    return go.Scatter(x=arrow_x, y=arrow_y, mode='lines',
+                     line=dict(color=color, width=2), showlegend=False)
+
+# 시뮬레이션 플롯 생성 함수.    
 def create_simulation_plot():
     state = st.session_state.simulation_state
+    center = [WINDOW_WIDTH/2, WINDOW_HEIGHT/2]
     
     fig = go.Figure()
     
-    # 원형 궤도 그리기
-    theta = np.linspace(0, 2*np.pi, 100)
-    center_x = state['width']/2
-    center_y = state['height']/2
-    radius = 100
+    # 궤도, 중심점, 공 위치를 한번에 추가
+    fig.add_traces([
+        # 원형 궤도
+        go.Scatter(
+            x=center[0] + ORBIT_RADIUS*np.cos(np.linspace(0, 2*np.pi, 100)),
+            y=center[1] + ORBIT_RADIUS*np.sin(np.linspace(0, 2*np.pi, 100)),
+            mode='lines', line=dict(color='black', width=1)
+        ),
+        # 중심점
+        go.Scatter(
+            x=[center[0]], y=[center[1]],
+            mode='markers', marker=dict(color='red', size=10)
+        ),
+        # 공
+        go.Scatter(
+            x=[state['position'][0]], y=[state['position'][1]],
+            mode='markers', marker=dict(color='blue', size=15)
+        )
+    ])
     
-    fig.add_trace(go.Scatter(
-        x=center_x + radius*np.cos(theta),
-        y=center_y + radius*np.sin(theta),
-        mode='lines',
-        line=dict(color='black', width=1),
-        name='orbit'
-    ))
-    
-    # 중심점 그리기
-    fig.add_trace(go.Scatter(
-        x=[center_x],
-        y=[center_y],
-        mode='markers',
-        marker=dict(color='red', size=10),
-        name='center'
-    ))
-    
-    # 궤적 그리기
+    # 궤적이 있는 경우만 추가
     if state['trajectory_points']:
-        trajectory_x = [p[0] for p in state['trajectory_points']]
-        trajectory_y = [p[1] for p in state['trajectory_points']]
+        trajectory = np.array(state['trajectory_points'])
         fig.add_trace(go.Scatter(
-            x=trajectory_x,
-            y=trajectory_y,
-            mode='markers',
-            marker=dict(color='black', size=2),
-            name='trajectory'
+            x=trajectory[:, 0], y=trajectory[:, 1],
+            mode='markers', marker=dict(color='black', size=2)
         ))
     
-    # 공 그리기
-    fig.add_trace(go.Scatter(
-        x=[state['position'][0]],
-        y=[state['position'][1]],
-        mode='markers',
-        marker=dict(color='blue', size=15),
-        name='ball'
-    ))
+    # 벡터 표시 (속도, 힘)
+    for show_vector, vector_type, color in [
+        (state['show_velocity_vector'], state['velocity'], 'blue'),
+        (state['show_force_vector'], calculate_force(state['position'], state['velocity']), 'green')
+    ]:
+        if show_vector:
+            vector_end = [
+                state['position'][0] + vector_type[0] * VECTOR_SCALE,
+                state['position'][1] + vector_type[1] * VECTOR_SCALE
+            ]
+            arrow = create_arrow(state['position'], vector_end, color)
+            if arrow:
+                fig.add_trace(arrow)
     
-    # 벡터 그리기
-    vector_ratio = 0.15
-    if state['show_velocity_vector']:
-        velocity_end = [
-            state['position'][0] + state['velocity'][0] * vector_ratio,
-            state['position'][1] + state['velocity'][1] * vector_ratio
-        ]
-        fig.add_trace(go.Scatter(
-            x=[state['position'][0], velocity_end[0]],
-            y=[state['position'][1], velocity_end[1]],
-            mode='lines',
-            line=dict(color='blue', width=2),
-            name='velocity'
-        ))
-    
-    if state['show_force_vector']:
-        force = calculate_force(state['position'])
-        force_end = [
-            state['position'][0] + force[0] * vector_ratio,
-            state['position'][1] + force[1] * vector_ratio
-        ]
-        fig.add_trace(go.Scatter(
-            x=[state['position'][0], force_end[0]],
-            y=[state['position'][1], force_end[1]],
-            mode='lines',
-            line=dict(color='green', width=2),
-            name='force'
-        ))
-    
+    # 레이아웃 설정
     fig.update_layout(
-        width=800,
-        height=600,
+        width=WINDOW_WIDTH, height=WINDOW_HEIGHT,
         showlegend=False,
-        xaxis=dict(
-            range=[0, state['width']],
-            scaleanchor="y",  # y축과 스케일 고정
-            scaleratio=1,     # 1:1 비율 유지
-        ),
-        yaxis=dict(
-            range=[0, state['height']],
-        ),
+        xaxis=dict(range=[0, WINDOW_WIDTH], scaleanchor="y", scaleratio=1),
+        yaxis=dict(range=[0, WINDOW_HEIGHT]),
         margin=dict(l=0, r=0, t=0, b=0),
-        plot_bgcolor='white',  # 배경색 설정
+        plot_bgcolor='white'
     )
     
     return fig
 
 def main():
-    st.subheader("원운동 시뮬레이션")
-    
-    # 초기화
     init_simulation_state()
     
-    # 컨트롤 버튼들
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        try:
-            button1 = st.button("시뮬레이션 시작/정지", key=st.session_state.button1_key)
-        except:
-            initialize_button1_key()
-            button1 = st.button("시뮬레이션 시작/정지", key=st.session_state.button1_key)
-
-        if button1:
-            st.session_state.simulation_state['simulation_running'] = \
-                not st.session_state.simulation_state['simulation_running']
+    # 컨트롤 버튼들을 딕셔너리로 관리
+    controls = {
+        "▶️ 시뮬레이션 시작/정지": lambda: {'simulation_running': not st.session_state.simulation_state['simulation_running']},
+        "🟢 힘 벡터 표시": lambda: {'show_force_vector': not st.session_state.simulation_state['show_force_vector']},
+        "🔵 속도 벡터 표시": lambda: {'show_velocity_vector': not st.session_state.simulation_state['show_velocity_vector']},
+        "🔄 다시 재생": lambda: {
+            'position': [center_x + ORBIT_RADIUS, center_y],
+            'velocity': [0, INITIAL_SPEED],
+            'trajectory_points': [],
+            'simulation_running': False,
+            'show_velocity_vector': True,
+            'show_force_vector': False,
+        },
+    }
     
-    with col2:
-        try:
-            button2 = st.button("다시 재생", key=st.session_state.button2_key)
-        except:
-            initialize_button2_key()
-            button2 = st.button("다시 재생", key=st.session_state.button2_key)
-        
-        if button2:
-            st.session_state.simulation_state['position'] = [500, 300]  # 중심에서 오른쪽으로 100
-            st.session_state.simulation_state['velocity'] = [0, -200]   # 위쪽 방향으로 초기 속도
-            st.session_state.simulation_state['trajectory_points'] = []
-            st.session_state.simulation_state['force_vectors'] = []
-            st.session_state.simulation_state['simulation_running'] = False
+    # 버튼 생성 및 상태 업데이트
+    cols = st.columns(len(controls))
+    for i, (label, update_func) in enumerate(controls.items()):
+        unique_key = f"sim_button_{label}_{st.session_state.get('button_timestamp', 0)}"
+        if cols[i].button(label, key=unique_key, type="secondary", use_container_width=True):
+            st.session_state.simulation_state.update(update_func())
     
-    with col3:
-        try:
-            button3 = st.button("속도 벡터 표시", key=st.session_state.button3_key)
-        except:
-            initialize_button3_key()
-            button3 = st.button("속도 벡터 표시", key=st.session_state.button3_key)
-
-        if button3:
-            st.session_state.simulation_state['show_velocity_vector'] = \
-                not st.session_state.simulation_state['show_velocity_vector']
+    # 플롯 placeholder 생성
+    plot_container = st.empty()
     
-    with col4:
-        try:
-            button4 = st.button("힘 벡터 표시", key=st.session_state.button4_key)
-        except:
-            initialize_button4_key()
-            button4 = st.button("힘 벡터 표시", key=st.session_state.button4_key)
-        
-        if button4:
-            st.session_state.simulation_state['show_force_vector'] = \
-                not st.session_state.simulation_state['show_force_vector']
-    
-    # 시뮬레이션 실행
-    if st.session_state.simulation_state['simulation_running']:
-        update_position(1/60 * st.session_state.simulation_state['slow_motion_factor'])
-    
-    # 플롯을 고정된 크기의 컨테이너에 표시
-    plot_container = st.container()
-    with plot_container:
+    # 시뮬레이션 실행 및 표시
+    while st.session_state.simulation_state['simulation_running']:
+        update_position(1/FPS)
         fig = create_simulation_plot()
-        st.plotly_chart(fig, use_container_width=False)
+        plot_container.plotly_chart(fig, use_container_width=False)
+        time.sleep(1/FPS)  # FPS에 맞춰 대기
     
-    # 60fps로 업데이트
-    st.empty()
-    st.rerun()
+    # 시뮬레이션이 멈춰있을 때도 현재 상태 표시
+    if not st.session_state.simulation_state['simulation_running']:
+        fig = create_simulation_plot()
+        plot_container.plotly_chart(fig, use_container_width=False)
 
 if __name__ == "__main__":
     main()
