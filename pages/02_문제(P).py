@@ -49,7 +49,7 @@ if not os.path.exists(".cache/embeddings"):
     os.mkdir(".cache/embeddings")
 
 st.title("문제 살펴보기 📄")
-st.text("다음 문제 상황의 정답을 예상해보고, 그 예상의 이유를 적어봅시다.")
+st.info("- 다음 문제 상황의 정답을 예상해보고, 그 예상의 이유를 적어봅시다. \n - 왼쪽 사이드바 캔버스에 그림을 그려보고 그 이유를 하단 박스에 적어보세요.")
 # 처음 1번만 실행하기 위한 코드
 if "messages_predict" not in st.session_state:
     # 대화기록을 저장하기 위한 용도로 생성한다.
