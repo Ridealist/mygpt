@@ -187,13 +187,13 @@ with st.sidebar:
 
 
 st.subheader("오늘 배운 물리 개념은?")
-st.info("- 1.여러 가지 운동과 2.힘과 운동 소단원에서 배운 내용을 복습해봅시다:) \n - 아래 2개 탭을 모두 마치고 다음 단계로 넘어가주세요! \n - 다음 단계는 하단의 버튼과 함께 왼쪽 사이드바에서 직접 클릭할 수 있습니다.")
+st.info("- 1.여러 가지 운동과 2.힘과 운동 소단원에서 배운 내용을 복습해봅시다:) \n - 아래 2개 탭을 모두 마치고 다음 단계로 넘어가주세요! \n - 다음 단계는 하단의 버튼과 함께 왼쪽 사이드바에서 직접 클릭할 수 있습니다. \n - 문제를 풀면서 모르는게 있으면 왼쪽 사이드바의 🤖AI 튜터에게 물어보세요!")
 
 tab1, tab2 = st.tabs(["1. 여러 가지 운동", "2. 힘과 운동"])
 
 with tab1:
     st.write("**Q1. 놀이공원에서 볼 수 있는 여러 가지 놀이 기구들의 운동 방향과 속력 변화를 표에 정리해봅시다.**")
-    st.write("(셀을 더블클릭해서 알맞은 설명을 골라주세요)")
+    st.write("(셀을 더블클릭한 후 알맞은 설명을 골라주세요)")
     df = pd.DataFrame(
         [
             {"type": f"https://dimg.donga.com/ugc/CDB/SODA/Article/57/e0/f9/a4/57e0f9a4248cd2738de6.gif", "direction": None, "speed": None},
@@ -204,7 +204,7 @@ with tab1:
     )
 
     column_configuration = {
-        "type": st.column_config.ImageColumn("놀이 기구 (클릭해서 확대해보세요)"),
+        "type": st.column_config.ImageColumn("놀이 기구 (더블클릭해서 확대해보세요)"),
         "direction": st.column_config.SelectboxColumn(
             "운동 방향", options=["변한다", "일정하다"]
         ),
