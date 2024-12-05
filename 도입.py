@@ -404,7 +404,7 @@ with tab2:
             if not st.session_state.balloons_t2_q1:
                 st.balloons()
                 st.session_state.balloons_t2_q1 = True
-            st.image("/Users/ridealist/Desktop/physics-tutor/images/explain_3.png")
+            st.image("images/explain_3.png")
         else:
             st.error("틀렸습니다. 다시 시도하세요.")
 
@@ -458,7 +458,7 @@ with tab2:
             if not st.session_state.balloons_t2_q2:
                 st.balloons()
                 st.session_state.balloons_t2_q2 = True
-            st.image("/Users/ridealist/Desktop/physics-tutor/images/explain_4.png")
+            st.image("images/explain_4.png")
         else:
             st.error("조금 더 분발해서 다시 시도하세요.")
 
@@ -515,7 +515,7 @@ with tab2:
             if not st.session_state.balloons_t2_q3:
                 st.balloons()
                 st.session_state.balloons_t2_q3 = True
-            st.image("/Users/ridealist/Desktop/physics-tutor/images/explain_5.png")
+            st.image("images/explain_5.png")
         else:
             st.error("조금 더 분발해서 다시 시도하세요.")    
 
