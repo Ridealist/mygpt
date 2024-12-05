@@ -37,6 +37,7 @@ if "tutor_messages" not in st.session_state:
     # 대화기록을 저장하기 위한 용도로 생성한다.
     st.session_state["tutor_messages"] = []
 
+DEFAULT_OPERATION = "자바 실험실"
 
 def enalble_submit_button():
     st.session_state["submit_button_disabled"] = False
@@ -84,16 +85,16 @@ main_tab1.text("문제 상황")
 main_tab1.image("images/problem_1.png")
 
 # 모델 선택 메뉴
-selected_model = "gpt-4o-mini" # st.selectbox("LLM 선택", ["gpt-4o", "gpt-4o-mini"], index=0)
+selected_model = "gpt-4o-mini"
 
+default_operation = "자바 실험실"
 
 # 사이드바 시스템 체인 생성
 def generate_chain(model_name="gpt-4o-mini"):
     # 현재 선택된 operation 값 가져오기
-    current_operation = operation  # 현재 선택된 selectbox 값
-    last_input = st.session_state.get('last_input', '')
-    
-    system_prompt = f"""당신은 친근하고 대화형 학습을 돕는 **물리 튜터**입니다.  
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", 
+         """당신은 친근하고 대화형 학습을 돕는 **물리 튜터**입니다.  
     **목표:** 학생이 '등속 원운동'에 대한 시뮬레이션에서 변수의 조작에 따른 물체의 운동 변화를 관찰하고, 이를 통해 자신의 추론을 검증해볼 수 있도록 지원하세요.  
     **중요:**  
     1. 절대로 '등속 원운동'에서 힘의 방향이나 크기에 대한 결론을 직접 알려주지 마세요.
@@ -119,9 +120,7 @@ def generate_chain(model_name="gpt-4o-mini"):
                 "'문제'에서 답한 내용을 반영한 시뮬레이션 보기 버튼을 눌러 확인해보세요."
                 "시뮬레이션에 반영되어야 한다고 생각하는 내용을 시뮬레이션 위에 있는 입력창에 입력해주세요."
     """
-
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
+        ),
         MessagesPlaceholder(variable_name="history"),
         ("human", "{input}")
     ])
@@ -144,6 +143,13 @@ def generate_chain(model_name="gpt-4o-mini"):
 
 # 사이드바 생성
 with st.sidebar:
+
+    options = ["자바 실험실", "자율실험실"]
+    operation = st.pills("(어떤 시뮬레이션을 하고 있는지 선택해주세요)", options, selection_mode="single")
+
+    if operation is None:
+        operation = DEFAULT_OPERATION
+
     # 초기화 버튼 생성
     st.text("AI튜터와 대화하기")
     messages = st.container(height=300)
@@ -170,7 +176,10 @@ with st.sidebar:
             # 빈 공간(컨테이너)을 만들어서, 여기에 토큰을 스트리밍 출력한다.
             container = st.empty()
             generator = conv_chain.stream(
-                {"input": user_input},
+                {
+                    "input": user_input,
+                    "current_operation": operation
+                },
                 config={"configurable": {"session_id": "ab12"}}
             )
             ai_answer = ""
